@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        instance: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
+        instance: [1,2,3,4,5,6,7,8,9]
 
     steps:
       - name: Checkout repository
@@ -20,7 +20,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
 
       - name: Install Python dependencies
         run: |
@@ -34,10 +33,10 @@ jobs:
         run: |
           playwright install-deps
           playwright install chromium
-          
+
       - name: Install tinyproxy
         run: sudo apt install tinyproxy
-       
+
       - name: Start tinyproxy
         run: tinyproxy -d -c tinyproxy.conf &
 
@@ -50,7 +49,10 @@ jobs:
           Xvnc :1 -geometry 1920x1080 -SecurityTypes None -rfbport 5901 -localhost -listen tcp -ac &
           Xvnc :2 -geometry 1920x1080 -SecurityTypes None -rfbport 5902 -localhost -listen tcp -ac &
           Xvnc :3 -geometry 1920x1080 -SecurityTypes None -rfbport 5903 -localhost -listen tcp -ac &
-         
+          Xvnc :4 -geometry 1920x1080 -SecurityTypes None -rfbport 5904 -localhost -listen tcp -ac &
+          Xvnc :5 -geometry 1920x1080 -SecurityTypes None -rfbport 5905 -localhost -listen tcp -ac &
+          Xvnc :6 -geometry 1920x1080 -SecurityTypes None -rfbport 5906 -localhost -listen tcp -ac &
+
           sleep 2
 
       - name: Start scripts
@@ -59,4 +61,7 @@ jobs:
           DISPLAY=:1 python surfe.py &
           DISPLAY=:2 python surfe.py &
           DISPLAY=:3 python surfe.py &
+          DISPLAY=:4 python surfe.py &
+          DISPLAY=:5 python surfe.py &
+          DISPLAY=:6 python surfe.py &
           wait
