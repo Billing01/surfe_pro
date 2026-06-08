@@ -1,1 +1,62 @@
-se
+name: Playwright python
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run-playwright:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        instance: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+
+      - name: Install Python dependencies
+        run: |
+          pip install playwright
+          pip install requests
+          pip install psutil
+          pip install pynput
+          pip install aiohttp
+
+      - name: Install Playwright Browsers
+        run: |
+          playwright install-deps
+          playwright install chromium
+          
+      - name: Install tinyproxy
+        run: sudo apt install tinyproxy
+       
+      - name: Start tinyproxy
+        run: tinyproxy -d -c tinyproxy.conf &
+
+      - name: Install Xvnc
+        run: sudo apt update && sudo apt install xfce4 xfce4-goodies tigervnc-standalone-server -y
+
+      - name: Run Xvnc instances
+        run: |
+          Xvnc :0 -geometry 1920x1080 -SecurityTypes None -rfbport 5900 -localhost -listen tcp -ac &
+          Xvnc :1 -geometry 1920x1080 -SecurityTypes None -rfbport 5901 -localhost -listen tcp -ac &
+          Xvnc :2 -geometry 1920x1080 -SecurityTypes None -rfbport 5902 -localhost -listen tcp -ac &
+          Xvnc :3 -geometry 1920x1080 -SecurityTypes None -rfbport 5903 -localhost -listen tcp -ac &
+         
+          sleep 2
+
+      - name: Start scripts
+        run: |
+          DISPLAY=:0 python surfe.py &
+          DISPLAY=:1 python surfe.py &
+          DISPLAY=:2 python surfe.py &
+          DISPLAY=:3 python surfe.py &
+          wait
