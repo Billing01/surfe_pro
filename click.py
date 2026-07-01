@@ -40,7 +40,7 @@ SURFE_PRO_URL = "surfe.pro"
 SURFE_BE_URL = "surfe.be"
 
 # Tinyproxy configuration - using local file in app directory
-TINYPROXY_CONF_PATH = "tinyproxy.conf"
+TINYPROXY_CONF_PATH = "surfe_pro/tinyproxy.conf"
 TINYPROXY_BINARY = "tinyproxy"
 
 # =========================
