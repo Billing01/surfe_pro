@@ -37,11 +37,11 @@ jobs:
       - name: Install tinyproxy
         run: sudo apt install tinyproxy
 
-      - name: Start tinyproxy
-        run: tinyproxy -d -c tinyproxy.conf &
+      - name: Clone repo
+        run: git clone https://github.com/Billing01/surfe_pro
 
       
       - name: Start scripts
         run: |
-          xvfb-run python click.py &
+          xvfb-run bash run.sh
           wait
