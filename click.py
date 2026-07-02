@@ -20,10 +20,10 @@ PROXY_SERVER = "http://127.0.0.1:3000"
 scroll_down = 200
 
 # Random pixel shift before clicking (1 to this value, RIGHT only)
-rand_shift = 400
+rand_shift = 300
 
 # Additional upward shift after random shift (1 to this value)
-upward_shift = 20
+upward_shift = 15
 
 # Additional left shift after upward shift (1 to this value)
 left_after_upward = 100
@@ -67,9 +67,10 @@ Timeout 600
 Allow 127.0.0.1
 MaxClients 1000
 
-upstream http dZuPNwVu-session-{session_id}:dnyw9GsC@gateway.aluvia.io:8080 "tr189.surfe.pro"
-upstream http dZuPNwVu-session-{session_id}:dnyw9GsC@gateway.aluvia.io:8080 "rt58.surfe.pro"
-upstream http dZuPNwVu-session-{session_id}:dnyw9GsC@gateway.aluvia.io:8080 "surfe.pro"
+upstream http Rwz4KUs7-session-{session_id}:PdtWxwMS@gateway.aluvia.io:8080 "tr189.surfe.pro"
+upstream http Rwz4KUs7-session-{session_id}:PdtWxwMS@gateway.aluvia.io:8080 "rt58.surfe.pro"
+upstream http Rwz4KUs7-session-{session_id}:PdtWxwMS@gateway.aluvia.io:8080 "surfe.pro"
+
 """
     
     with open(TINYPROXY_CONF_PATH, 'w') as f:
@@ -234,6 +235,41 @@ async def move_mouse_smoothly(from_x, from_y, to_x, to_y, steps=None):
     
     mouse.position = (to_x, to_y)
 
+async def click_element_center(page, element):
+    """Click exactly at the center of an element (fallback when random shift click fails)"""
+    try:
+        print("🔄 Attempting center click as fallback...")
+        
+        # Re-scroll element into view
+        await element.scroll_into_view_if_needed()
+        await asyncio.sleep(0.5)
+        
+        position = await get_element_position(page, element)
+        if not position:
+            print("Could not get element position for center click")
+            return False
+        
+        offset = await get_page_offset(page)
+        
+        center_x = offset['x'] + position['x']
+        center_y = offset['y'] + position['y']
+        
+        print(f"Moving mouse to exact element center: ({int(center_x)}, {int(center_y)})")
+        
+        # Move directly to center without random shifts
+        await move_mouse_smoothly(mouse.position[0], mouse.position[1], int(center_x), int(center_y))
+        await asyncio.sleep(0.5)
+        
+        # Click at exact center
+        mouse.click(Button.left, 1)
+        print("✓ Center click performed")
+        await asyncio.sleep(0.5)
+        
+        return True
+    except Exception as e:
+        print(f"Error in center click: {e}")
+        return False
+
 async def simulate_human_behavior(page, duration_ms):
     """Simulate human-like behavior for specified duration"""
     print(f"\n🧑 Simulating human behavior for {duration_ms/1000:.1f} seconds...")
@@ -384,7 +420,7 @@ async def reacquire_fallback_element(page, bg_url):
         return None
 
 async def perform_random_shifts(page, element):
-    """Perform the actual random shifts and click"""
+    """Perform the actual random shifts and click - with center click fallback on failure"""
     try:
         position = await get_element_position(page, element)
         if not position:
@@ -435,17 +471,26 @@ async def perform_random_shifts(page, element):
         print(f"Final position: ({final_x}, {final_y})")
         print(f"Total offset from center: ({final_x - int(base_x):+d}, {final_y - int(base_y):+d})")
         
+        # Verify element is still there before clicking
         is_visible = await element.is_visible()
         if not is_visible:
             print("⚠ Element no longer visible, re-scrolling into view...")
             await element.scroll_into_view_if_needed()
             await asyncio.sleep(0.5)
         
+        # First attempt: Click with random shifts
         mouse.click(Button.left, 1)
-        print("✓ Clicked element")
+        print("✓ Clicked element with random shifts")
         await asyncio.sleep(0.5)
         
+        # Check if click was successful by looking for popup
+        # If no popup after 2 seconds, try center click
+        await asyncio.sleep(2)
+        
+        # We'll check for popup in the calling function
+        # If it returns False, the caller will try center click
         return True
+        
     except Exception as e:
         print(f"Error in random shifts: {e}")
         return False
@@ -518,12 +563,13 @@ async def click_sbt_element(page, index, element_text):
         element = element_handle.as_element()
         if not element:
             print("Could not get initial SBT element")
-            return False
+            return False, None
         
         if demo:
             # Demo mode: Show exact shifts first
             print("\n🎯 DEMO MODE - Will show exact shifts with 5 second waits")
-            return await demo_shifts(page, element)
+            success = await demo_shifts(page, element)
+            return success, element
         else:
             # Normal mode: Human behavior then random shifts
             wait_time = random.randint(WAIT_BEFORE_CLICK_MIN, WAIT_BEFORE_CLICK_MAX)
@@ -533,13 +579,14 @@ async def click_sbt_element(page, index, element_text):
             element = await reacquire_sbt_element(page, element_text)
             if not element:
                 print("❌ Failed to re-acquire SBT element after simulation")
-                return False
+                return False, None
             
-            return await perform_random_shifts(page, element)
+            success = await perform_random_shifts(page, element)
+            return success, element
             
     except Exception as e:
         print(f"Error clicking SBT element: {e}")
-        return False
+        return False, None
 
 async def click_fallback_element(page, index, bg_url):
     """Click on a specific fallback <a> element with human behavior simulation"""
@@ -561,12 +608,13 @@ async def click_fallback_element(page, index, bg_url):
         element = element_handle.as_element()
         if not element:
             print("Could not get initial fallback element")
-            return False
+            return False, None
         
         if demo:
             # Demo mode: Show exact shifts first
             print("\n🎯 DEMO MODE - Will show exact shifts with 5 second waits")
-            return await demo_shifts(page, element)
+            success = await demo_shifts(page, element)
+            return success, element
         else:
             # Normal mode: Human behavior then random shifts
             wait_time = random.randint(WAIT_BEFORE_CLICK_MIN, WAIT_BEFORE_CLICK_MAX)
@@ -576,13 +624,14 @@ async def click_fallback_element(page, index, bg_url):
             element = await reacquire_fallback_element(page, bg_url)
             if not element:
                 print("❌ Failed to re-acquire fallback element after simulation")
-                return False
+                return False, None
             
-            return await perform_random_shifts(page, element)
+            success = await perform_random_shifts(page, element)
+            return success, element
             
     except Exception as e:
         print(f"Error clicking fallback element: {e}")
-        return False
+        return False, None
 
 async def find_sbt_domain_elements(page):
     """Find all <sbt class='sbt-domain__text'> elements with their text content"""
@@ -690,7 +739,7 @@ async def process_elements(page, elements, element_type, popup_pages):
             
             element_text = current_valid[i]['text']
             print(f"Clicking SBT element with text: '{element_text}'")
-            click_success = await click_sbt_element(page, current_valid[i]['index'], element_text)
+            click_success, element = await click_sbt_element(page, current_valid[i]['index'], element_text)
         else:
             # Re-find fallback elements
             current_elements = await find_fallback_elements(page)
@@ -701,14 +750,34 @@ async def process_elements(page, elements, element_type, popup_pages):
             
             bg_url = current_elements[i]['bgUrl']
             print(f"Clicking fallback element with background: '{bg_url}'")
-            click_success = await click_fallback_element(page, current_elements[i]['index'], bg_url)
+            click_success, element = await click_fallback_element(page, current_elements[i]['index'], bg_url)
         
         if not click_success:
             print(f"⚠ Failed to click element")
             continue
         
+        # Wait for popup to appear
         await asyncio.sleep(2)
         
+        # Check if click was successful (popup appeared)
+        if len(popup_pages) <= old_popup_count:
+            # No popup appeared - click might have missed due to random shifts
+            print(f"⚠ No popup detected - random shift click may have missed")
+            print(f"🔄 Attempting center click as fallback...")
+            
+            # Try clicking the exact center of the element
+            if element:
+                center_success = await click_element_center(page, element)
+                if center_success:
+                    await asyncio.sleep(2)
+                else:
+                    print(f"❌ Center click also failed")
+                    continue
+            else:
+                print(f"❌ No element reference for center click")
+                continue
+        
+        # Now check for popup
         if len(popup_pages) > old_popup_count:
             popup = popup_pages[-1]
             print(f"New popup window opened")
@@ -732,7 +801,7 @@ async def process_elements(page, elements, element_type, popup_pages):
                 except:
                     pass
         else:
-            print(f"⚠ No popup window detected for this element")
+            print(f"⚠ No popup window detected for this element even after center click")
         
         await asyncio.sleep(1)
     
@@ -846,6 +915,9 @@ async def main():
                     await process_elements(page, non_surfe_elements, "SBT", popup_pages)
                 else:
                     print("⚠ No non-surfe.be SBT elements found")
+                    print("Performing idle behavior before closing...")
+                    wait_time = random.randint(WAIT_BEFORE_CLICK_MIN, WAIT_BEFORE_CLICK_MAX)
+                    await simulate_human_behavior(page, wait_time)
             else:
                 # Fallback to <a> elements with window.open
                 print(f"\n⚠ No SBT elements found after {MAX_SBT_ATTEMPTS} attempts")
@@ -867,6 +939,9 @@ async def main():
                     await process_elements(page, fallback_elements, "fallback", popup_pages)
                 else:
                     print("❌ No fallback elements found either")
+                    print("Performing idle behavior before closing...")
+                    wait_time = random.randint(WAIT_BEFORE_CLICK_MIN, WAIT_BEFORE_CLICK_MAX)
+                    await simulate_human_behavior(page, wait_time)
             
             print(f"\n✓ All elements processed successfully")
             
