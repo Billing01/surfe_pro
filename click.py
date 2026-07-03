@@ -67,9 +67,9 @@ Timeout 600
 Allow 127.0.0.1
 MaxClients 1000
 
-upstream http 7C7bgrFu-session-{session_id}:DSfMNZqj@gateway.aluvia.io:8080 "tr189.surfe.pro"
-upstream http 7C7bgrFu-session-{session_id}:DSfMNZqj@gateway.aluvia.io:8080 "rt58.surfe.pro"
-upstream http 7C7bgrFu-session-{session_id}:DSfMNZqj@gateway.aluvia.io:8080 "surfe.pro"
+upstream http PR6UW4AR-session-{session_id}:H7nQTzdm@gateway.aluvia.io:8080 "tr189.surfe.pro"
+upstream http PR6UW4AR-session-{session_id}:H7nQTzdm@gateway.aluvia.io:8080 "rt58.surfe.pro"
+upstream http PR6UW4AR-session-{session_id}:H7nQTzdm@gateway.aluvia.io:8080 "surfe.pro"
 
 """
     
