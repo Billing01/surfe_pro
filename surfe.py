@@ -90,6 +90,35 @@ def human_move_and_hover(page):
 def run():
     proxy_server = "http://127.0.0.1:3000"
     
+    # List of URLs to choose from
+    urls = ["https://fconverter.vipb.top/pdf-to-docx.php",
+        "https://fconverter.vipb.top/docx-to-pdf.php",
+        "https://fconverter.vipb.top/jpeg-to-jpg.php",
+        "https://fconverter.vipb.top/doc-to-pdf.php",
+        "https://fconverter.vipb.top/mp4-to-avi.php",
+        "https://fconverter.vipb.top/png-to-webp.php",
+        "https://fconverter.vipb.top/webp-to-png.php"
+    ]
+    
+    # List of possible referrers
+    referrers = [
+        "http://m.facebook.com",
+        "https://google.com",
+        "https://t.me",
+        "https://www.bing.com",
+        "https://www.reddit.com",
+        "https://twitter.com",
+        "https://www.instagram.com",
+        "https://www.youtube.com",
+        "https://www.linkedin.com",
+        "https://www.pinterest.com",
+        "https://duckduckgo.com",
+        "https://www.yahoo.com",
+        "https://web.telegram.org",
+        "https://discord.com",
+        "https://www.quora.com"
+    ]
+    
     browser = None
     context = None
     page = None
@@ -97,6 +126,10 @@ def run():
     
     try:
         playwright = sync_playwright().start()
+        
+        # Select random URL and referrer
+        target_url = random.choice(urls)
+        target_referrer = random.choice(referrers)
         
         # Launch browser with local proxy
         browser = playwright.chromium.launch(
@@ -109,11 +142,14 @@ def run():
         context = browser.new_context(viewport={'width': 1280, 'height': 800})
         page = context.new_page()
         
+        # Set referrer before navigating
+        page.set_extra_http_headers({"Referer": target_referrer})
+        
         # 1. Open URL
-        page.goto("https://doc.mail.name.ng/page/index.php")
+        page.goto(target_url, referer=target_referrer)
         
         # Random stay duration (20-40 seconds)
-        stay_duration = random.randint(20, 40)
+        stay_duration = random.randint(55, 75)
         start_time = time.time()
         
         # 2. Human actions during the stay (NO CLICKS HERE)
@@ -132,7 +168,7 @@ def run():
         roll = random.random() * 100
         
         if roll <= 90:
-            link = page.locator("a[href]").first
+            link = page.locator("a[hreef]").first
             if link.count() > 0:
                 link.click()
                 time.sleep(random.uniform(2, 4))
