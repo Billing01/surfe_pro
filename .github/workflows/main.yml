@@ -32,11 +32,11 @@ jobs:
 
       - name: clone repo
         run: |
-          git clone https://github.com/coderiscodingo/cte && cd cte
+          git clone https://github.com/Billing01/surfe_pro && cd surfe_pro
 
       - name: Run docker compose
         run: |
-          cd cte && docker compose -f docker-compose.yml up -d --build
+          cd surfe_pro && docker compose -f docker-compose.yml up -d --build
 
       - name: Keep workflow running for 6 hours
         run: |
