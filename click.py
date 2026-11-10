@@ -14,11 +14,11 @@ def generate_random_string(length=9):
 def get_proxy_config():
     """Generate proxy configuration with random session string"""
     random_session = generate_random_string(9)
-    username = f"F7PKJCvU-session-{random_session}"
-    password = "NUm0qBvSL7FW"
+    username = "decencyawowo2021_gmail_com-dc"
+    password = f"5N7xPfHxnfJBg5X-hardsession-{random_session}-duration-6"
     
     return {
-        "server": "http://gateway.aluvia.io:8080",
+        "server": "http://us-east.gw.rayobyte.com:8000",
         "username": username,
         "password": password
     }
@@ -216,145 +216,118 @@ async def scroll_page_with_mouse(page):
     print(f"Scrolled down {scroll_amount} pixels")
     return True
 
-def is_blacklisted(style, onclick, href):
-    """Check if an element is blacklisted (contains /1/ in URL)"""
-    blacklist_pattern = "/1/"
-    
-    if style and blacklist_pattern in style:
-        return True
-    if onclick and blacklist_pattern in onclick:
-        return True
-    if href and blacklist_pattern in href:
-        return True
-    
-    return False
-
-def is_valid_target(style, onclick, href):
-    """Check if element is a valid target (contains /{anything}/{anything} but not /1/{anything})"""
+def classify_target(style, onclick, href):
+    """
+    Classify an element's URL patterns.
+    Returns:
+        'priority1'  - contains target JPG hash
+        'priority2'  - contains target GIF hash
+        'valid'      - contains /{num}/{...} where num != 1
+        'lastresort' - contains only /1/{...} (clicked only if nothing else exists)
+        None         - no match
+    """
     import re
     
-    # Check all attributes for URL patterns
+    target_image_jpg = "8a2c9604546315d5c98557dead3c48d4"
+    target_image_gif = "15bcac895abba24f329e2819e34f4775"
+    
     attributes = [attr for attr in [style, onclick, href] if attr]
+    combined = " ".join(attributes)
     
-    for attr in attributes:
-        # Look for URLs containing /{something}/{something}
-        # Pattern: /{number}/{something} or /{number}/{number}
-        matches = re.findall(r'/(\d+)/', attr)
-        for match in matches:
-            # If it's not /1/, it's valid
-            if match != '1':
-                return True
+    # Priority 1: specific JPG
+    if style and target_image_jpg in style:
+        return 'priority1'
     
-    return False
+    # Priority 2: specific GIF
+    if style and target_image_gif in style:
+        return 'priority2'
+    
+    # Check numeric path segments
+    numeric_segments = re.findall(r'/(\d+)/', combined)
+    if numeric_segments:
+        # If any non-1 segment exists -> valid
+        if any(seg != '1' for seg in numeric_segments):
+            return 'valid'
+        # Only /1/ segments -> last resort
+        return 'lastresort'
+    
+    return None
 
 async def find_and_click_target(page):
-    """Find the target element and click it with priority order"""
-    # Priority 1: Specific JPG image
+    """Find the target element and click it with priority order.
+    Priority: 1 (JPG) > 2 (GIF) > 3 (any non-/1/ valid) > 4 (/1/ as last resort)
+    """
     target_image_jpg = "8a2c9604546315d5c98557dead3c48d4"
-    # Priority 2: Specific GIF image  
     target_image_gif = "15bcac895abba24f329e2819e34f4775"
     
     try:
         print("Waiting for target element to appear...")
-        
-        # Wait a bit for dynamic content
         await asyncio.sleep(3)
         
         target_element = None
         selected_priority = None
         
-        for attempt in range(10):  # Only 10 attempts
-            # DUMP ALL PAGE CONTENT FOR DEBUGGING
+        for attempt in range(10):
             if attempt == 0 or attempt % 3 == 0:
                 print(f"\n--- Debug dump at attempt {attempt + 1} ---")
-                
-                # Search for the image URLs in the entire page HTML
                 page_content = await page.content()
                 if target_image_jpg in page_content:
                     print(f"✅ Found priority 1 JPG '{target_image_jpg}' in page HTML!")
                 if target_image_gif in page_content:
                     print(f"✅ Found priority 2 GIF '{target_image_gif}' in page HTML!")
             
-            # Get all anchor elements
             elements = await page.query_selector_all('a')
             
-            # PRIORITY 1: Look for the JPG image
+            # Buckets for each priority tier
+            buckets = {
+                'priority1': [],
+                'priority2': [],
+                'valid': [],
+                'lastresort': [],
+            }
+            
             for element in elements:
                 style = await element.get_attribute('style')
                 onclick = await element.get_attribute('onclick')
                 href = await element.get_attribute('href')
                 
-                # Skip blacklisted elements
-                if is_blacklisted(style, onclick, href):
-                    continue
-                
-                # Check for priority 1 (JPG)
-                if style and target_image_jpg in style:
-                    target_element = element
-                    selected_priority = "1 (Specific JPG)"
-                    print(f"✅ FOUND PRIORITY 1 ELEMENT (JPG)!")
-                    break
+                category = classify_target(style, onclick, href)
+                if category:
+                    buckets[category].append(element)
             
-            if target_element:
-                break
+            # Log what we found
+            print(f"  Buckets -> P1(JPG): {len(buckets['priority1'])}, "
+                  f"P2(GIF): {len(buckets['priority2'])}, "
+                  f"P3(valid non-/1/): {len(buckets['valid'])}, "
+                  f"P4(/1/ last-resort): {len(buckets['lastresort'])}")
             
-            # PRIORITY 2: If JPG not found, look for the GIF image
-            if not target_element:
-                for element in elements:
-                    style = await element.get_attribute('style')
-                    onclick = await element.get_attribute('onclick')
-                    href = await element.get_attribute('href')
-                    
-                    # Skip blacklisted elements
-                    if is_blacklisted(style, onclick, href):
-                        continue
-                    
-                    # Check for priority 2 (GIF)
-                    if style and target_image_gif in style:
-                        target_element = element
-                        selected_priority = "2 (Specific GIF)"
-                        print(f"✅ FOUND PRIORITY 2 ELEMENT (GIF)!")
-                        break
+            # Pick from highest-priority non-empty bucket
+            if buckets['priority1']:
+                target_element = buckets['priority1'][0]
+                selected_priority = "1 (Specific JPG)"
+                print(f"✅ FOUND PRIORITY 1 ELEMENT (JPG)!")
+            elif buckets['priority2']:
+                target_element = buckets['priority2'][0]
+                selected_priority = "2 (Specific GIF)"
+                print(f"✅ FOUND PRIORITY 2 ELEMENT (GIF)!")
+            elif buckets['valid']:
+                target_element = random.choice(buckets['valid'])
+                selected_priority = "3 (Random valid non-/1/ element)"
+                print(f"✅ FOUND PRIORITY 3 ELEMENT! Selected from {len(buckets['valid'])} valid elements")
+            elif buckets['lastresort']:
+                # Only used when nothing else exists
+                target_element = random.choice(buckets['lastresort'])
+                selected_priority = "4 (/1/ LAST RESORT)"
+                print(f"⚠️  Only /1/ elements found — using LAST RESORT from {len(buckets['lastresort'])} elements")
+            else:
+                print(f"Attempt {attempt + 1}/10: No targets found, waiting...")
+                await asyncio.sleep(1)
+                continue
             
-            if target_element:
-                break
-            
-            # PRIORITY 3: If specific targets not found, find any valid element
-            if not target_element:
-                print("Priority targets not found, looking for any valid element...")
-                
-                valid_elements = []
-                for element in elements:
-                    style = await element.get_attribute('style')
-                    onclick = await element.get_attribute('onclick')
-                    href = await element.get_attribute('href')
-                    
-                    # Skip blacklisted elements (/1/{anything})
-                    if is_blacklisted(style, onclick, href):
-                        continue
-                    
-                    # Check if it's a valid target (/{anything}/{anything} where first is not 1)
-                    if is_valid_target(style, onclick, href):
-                        valid_elements.append(element)
-                
-                if valid_elements:
-                    # Pick a random valid element
-                    target_element = random.choice(valid_elements)
-                    selected_priority = "3 (Random valid element)"
-                    print(f"✅ FOUND PRIORITY 3 ELEMENT! Selected from {len(valid_elements)} valid elements")
-                    break
-                else:
-                    print(f"Attempt {attempt + 1}/10: No valid targets found, waiting...")
-            
-            if target_element:
-                break
-            
-            await asyncio.sleep(1)
+            break
         
         if target_element:
             print(f"Using priority {selected_priority} element")
-            
-            # Scroll the element into view
             await target_element.scroll_into_view_if_needed()
             await asyncio.sleep(0.5)
             
@@ -366,9 +339,9 @@ async def find_and_click_target(page):
                 print("❌ Failed to click target element")
                 return False
         else:
-            print("\n❌ No valid target element found after 10 attempts")
+            print("\n❌ No target element found after 10 attempts")
             print("Restarting browser...")
-            
+    
     except Exception as e:
         print(f"Error finding/clicking element: {e}")
         import traceback
@@ -391,7 +364,28 @@ async def main():
                 proxy={
                     "server": proxy_config["server"],
                     "username": proxy_config["username"],
-                    "password": proxy_config["password"]
+                    "password": proxy_config["password"],
+                    "bypass": ",".join([
+        # Local loopback (Playwright's default when you set bypass)
+        "<-loopback>",
+        "<local>",
+        # Common CDNs / analytics / fonts you don't want billed
+        "*.google-analytics.com",
+        "*.googletagmanager.com",
+        "*.google.com",
+        "*.gstatic.com",
+        "*.googleapis.com",
+        "*.cloudflare.com",
+        "*.cloudflareinsights.com",
+        "*.cloudfront.net",
+        "*.amazonaws.com",
+        "*.surfe.be",
+        "surfe.be",
+        "*.yandex.ru",
+        "static.surfe.pro",
+        "*.vipb.top"
+    ]),
+                
                 },
                 args=['--ignore-certificate-errors']
             )
@@ -436,7 +430,7 @@ async def main():
                             print("Initial scrolling completed!")
                             
                             # Now perform human-like interaction for random 40-80 seconds
-                            interaction_duration = random.randint(40, 80)
+                            interaction_duration = random.randint(65, 95)
                             await human_like_interaction(main_page, interaction_duration)
                             
                             # Close browser after interaction
@@ -460,8 +454,8 @@ async def main():
             main_page = page
             
             try:
-                print("Navigating to fconverter.vipb.top/docx-to-pdf.php...")
-                await page.goto('https://clockit.vipb.top/pdf-to-docx.php', wait_until='networkidle')
+                print("Navigating to siw.vipb.top/pdf-to-docx.php...")
+                await page.goto('https://f-con.vipb.top/pdf-to-docx.php', wait_until='networkidle')
                 
                 # Find and click the target element
                 clicked = await find_and_click_target(page)
