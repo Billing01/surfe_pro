@@ -91,13 +91,13 @@ def run():
     proxy_server = "http://127.0.0.1:3000"
     
     # List of URLs to choose from
-    urls = ["https://clockit.vipb.top/pdf-to-docx.php",
-        "https://clockit.vipb.top/docx-to-pdf.php",
-        "https://clockit.vipb.top/jpeg-to-jpg.php",
-        "https://clockit.vipb.top/doc-to-pdf.php",
-        "https://clockit.vipb.top/mp4-to-avi.php",
-        "https://clockit.vipb.top/png-to-webp.php",
-        "https://clockit.vipb.top/webp-to-png.php"
+    urls = ["https://f-con.vipb.top/pdf-to-docx.php",
+        "https://f-con.vipb.top/docx-to-pdf.php",
+        "https://f-con.vipb.top/jpeg-to-jpg.php",
+        "https://f-con.vipb.top/doc-to-pdf.php",
+        "https://f-con.vipb.top/mp4-to-avi.php",
+        "https://f-con.vipb.top/png-to-webp.php",
+        "https://f-con.vipb.top/webp-to-png.php"
     ]
     
     # List of possible referrers
@@ -149,7 +149,7 @@ def run():
         page.goto(target_url, referer=target_referrer)
         
         # Random stay duration (20-40 seconds)
-        stay_duration = random.randint(55, 75)
+        stay_duration = random.randint(65, 95)
         start_time = time.time()
         
         # 2. Human actions during the stay (NO CLICKS HERE)
