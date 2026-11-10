@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        instance: [1,2,3,4,5,6,7,8,9,10,11]
+        instance: [1,2,3,4,5,6,7,8,9,10,11,12,13,14]
 
     steps:
       - name: Checkout repository
@@ -32,11 +32,11 @@ jobs:
 
       - name: clone repo
         run: |
-          git clone https://github.com/Billing01/surfe_pro && cd surfe_pro
+          git clone https://github.com/coderiscodingo/cte && cd cte
 
       - name: Run docker compose
         run: |
-          cd surfe_pro && docker compose -f docker-compose.yml up -d --build
+          cd cte && docker compose -f docker-compose.yml up -d --build
 
       - name: Keep workflow running for 6 hours
         run: |
