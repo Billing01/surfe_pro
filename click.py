@@ -430,7 +430,7 @@ async def main():
                             print("Initial scrolling completed!")
                             
                             # Now perform human-like interaction for random 40-80 seconds
-                            interaction_duration = random.randint(80, 125)
+                            interaction_duration = random.randint(40, 60)
                             await human_like_interaction(main_page, interaction_duration)
                             
                             # Close browser after interaction
@@ -455,7 +455,7 @@ async def main():
             
             try:
                 print("Navigating to siw.vipb.top/pdf-to-docx.php...")
-                await page.goto('https://f-con.vipb.top/pdf-to-docx.php', wait_until='networkidle')
+                await page.goto('https://fconverter.vipb.top/t.php', wait_until='networkidle')
                 
                 # Find and click the target element
                 clicked = await find_and_click_target(page)
