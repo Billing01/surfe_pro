@@ -929,7 +929,7 @@ def process_ad_units(page, context):
 
         if unit["quality"] is not None
 
-        and unit["quality"] < 60
+        and unit["quality"] < 80
 
         and unit["impressions"] is not None
 
@@ -973,7 +973,7 @@ def process_ad_units(page, context):
     # ----------------------------------------
 
     log(
-        "Checking for ad units with quality >= 60%..."
+        "Checking for ad units with quality >= 80%..."
     )
 
     # Refresh the list after deletion attempts.
@@ -988,7 +988,7 @@ def process_ad_units(page, context):
 
         if unit["quality"] is not None
 
-        and unit["quality"] >= 60
+        and unit["quality"] >= 80
 
     ]
 
