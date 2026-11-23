@@ -17,9 +17,9 @@ from playwright.sync_api import (
 # CONFIGURATION
 # ============================================================
 
-EMAIL = "redja1914@gmail.com"
+EMAIL = "cryon1914@gmail.com"
 PASSWORD = "Decent@5013"
-TOTP_SECRET = "SSA2DJNJHIP6K6A5"
+TOTP_SECRET = "33TD5HO67DAKMNN3"
 
 LOGIN_URL = "https://surfe.pro/login"
 
