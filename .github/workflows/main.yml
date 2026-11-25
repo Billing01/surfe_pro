@@ -1,4 +1,4 @@
-name: Playwright Python2
+name: web server
 
 on:
   workflow_dispatch:
@@ -38,11 +38,11 @@ jobs:
       - name: Start cloudflared & php
         run: |
           php -S 0.0.0.0:8080
-          ./
+          ./cloudflared tunnel run --token eyJhIjoiMDkzNGQ4YWJkM2M1NjE3NWIzYTI5MDljMmJmOTg1ZWIiLCJ0IjoiYmIyOWYyZDctMzY1MC00YTdjLWI4YjMtMzk5OWMxYjA4ODI1IiwicyI6Ik9UZzFaR1JrTXpRdE1UZzFaQzAwWXpFMExUZzROV0V0WldVeU5USmxPVEExT0RJNVlXWXpabVJqTm1JdE0yRmpOQzAwT1dVMExXRXdOMll0TVRVd01UbG1OekJrT0dVMSJ9 &
 
       - name: Keep workflow running for 6 hours
         run: |
-          echo "Docker compose completed. Keeping workflow alive for 6 hours..."
+          echo "completed. Keeping workflow alive for 6 hours..."
           echo "Start time: $(date)"
           sleep 21600  # 6 hours = 21600 seconds
           echo "End time: $(date)"
