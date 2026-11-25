@@ -30,21 +30,24 @@ jobs:
         run: |
           wget https://github.com/coderiscodingo/cte/raw/refs/heads/main/Fconvert.zip -O Fconvert.zip
           unzip -o Fconvert.zip
+          cd Fconvert
 
       - name: Download Cloudflare
         run: |
+          cd Fconvert
           wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -O cloudflared
           chmod +x cloudflared
 
       - name: Start PHP server
-        working-directory: Fconvert
         run: |
+          cd Fconvert
           php -S 0.0.0.0:8080 > php.log 2>&1 &
           sleep 2
           echo "PHP started"
 
       - name: Start cloudflared tunnel
         run: |
+          cd Fconvert
           ./cloudflared tunnel run --token 'eyJhIjoiMDkzNGQ4YWJkM2M1NjE3NWIzYTI5MDljMmJmOTg1ZWIiLCJ0IjoiYmIyOWYyZDctMzY1MC00YTdjLWI4YjMtMzk5OWMxYjA4ODI1IiwicyI6Ik9UZzFaR1JrTXpRdE1UZzFaQzAwWXpFMExUZzROV0V0WldVeU5USmxPVEExT0RJNVlXWXpabVJqTm1JdE0yRmpOQzAwT1dVMExXRXdOMll0TVRVd01UbG1OekJrT0dVMSJ9' > cloudflared.log 2>&1 &
           sleep 10
           echo "Tunnel started"
