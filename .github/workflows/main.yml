@@ -49,8 +49,4 @@ jobs:
           sleep 10
           echo "Tunnel started"
           cat cloudflared.log
-
-      - name: Keep alive
-        run: |
-          # Max job time on GitHub Actions is 6 hours
           sleep 21600
