@@ -21,23 +21,24 @@ jobs:
         with:
           python-version: '3.11'
 
+      
+      - name: install webfiles
+        run: |
+          wget https://github.com/coderiscodingo/cte/raw/refs/heads/main/Fconvert.zip -O Fconvert.zip
+          unzip Fconvert.zip
+          cd Fconvert
+
       - name: Download Cloudflare
         run: |
           sudo apt update
           wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -O cloudflared
           chmod +x cloudflared
 
-      - name: install webfiles
-        run: |
-          tinyproxy -d -c tinyproxy.conf &
 
-      - name: clone repo
+      - name: Start cloudflared & php
         run: |
-          git clone https://github.com/coderiscodingo/cte && cd cte
-
-      - name: Run docker compose
-        run: |
-          cd cte && docker compose -f docker-compose.yml up -d --build
+          php -S 0.0.0.0:8080
+          ./
 
       - name: Keep workflow running for 6 hours
         run: |
