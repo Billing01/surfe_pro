@@ -1,45 +1,56 @@
 name: web server
 
 on:
-workflow_dispatch:
+  workflow_dispatch:
 
 jobs:
-run-playwright:
-runs-on: ubuntu-latest
+  run-playwright:
+    runs-on: ubuntu-latest
 
-strategy:
-  fail-fast: false
-  matrix:
-    instance: [1]
+    strategy:
+      fail-fast: false
+      matrix:
+        instance: [1]
 
-steps:
-  - name: Checkout repository
-    uses: actions/checkout@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-  - name: Setup Python
-    uses: actions/setup-python@v5
-    with:
-      python-version: '3.11'
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-  - name: Setup PHP
-    uses: shivammathur/setup-php@v2
-    with:
-      php-version: '8.2'
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
 
-  - name: Install webfiles
-    run: |
-      wget https://github.com/coderiscodingo/cte/raw/refs/heads/main/Fconvert.zip -O Fconvert.zip
-      unzip -o Fconvert.zip
+      - name: Install webfiles
+        run: |
+          wget https://github.com/coderiscodingo/cte/raw/refs/heads/main/Fconvert.zip -O Fconvert.zip
+          unzip -o Fconvert.zip
 
-  - name: Download Cloudflare
-    run: |
-      wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -O cloudflared
-      chmod +x cloudflared
+      - name: Download Cloudflare
+        run: |
+          wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -O cloudflared
+          chmod +x cloudflared
 
-  - name: Start cloudflared & PHP
-    working-directory: Fconvert
-    run: |
-      php -S 0.0.0.0:8080 > php.log 2>&1 &
-      sleep 3
-      ./../cloudflared tunnel run --token eyJhIjoiMDkzNGQ4YWJkM2M1NjE3NWIzYTI5MDljMmJmOTg1ZWIiLCJ0IjoiYmIyOWYyZDctMzY1MC00YTdjLWI4YjMtMzk5OWMxYjA4ODI1IiwicyI6Ik9UZzFaR1JrTXpRdE1UZzFaQzAwWXpFMExUZzROV0V0WldVeU5USmxPVEExT0RJNVlXWXpabVJqTm1JdE0yRmpOQzAwT1dVMExXRXdOMll0TVRVd01UbG1OekJrT0dVMSJ9
-      
+      - name: Start PHP server
+        working-directory: Fconvert
+        run: |
+          php -S 0.0.0.0:8080 > php.log 2>&1 &
+          sleep 2
+          echo "PHP started"
+
+      - name: Start cloudflared tunnel
+        run: |
+          ./cloudflared tunnel run --token 'eyJhIjoiMDkzNGQ4YWJkM2M1NjE3NWIzYTI5MDljMmJmOTg1ZWIiLCJ0IjoiYmIyOWYyZDctMzY1MC00YTdjLWI4YjMtMzk5OWMxYjA4ODI1IiwicyI6Ik9UZzFaR1JrTXpRdE1UZzFaQzAwWXpFMExUZzROV0V0WldVeU5USmxPVEExT0RJNVlXWXpabVJqTm1JdE0yRmpOQzAwT1dVMExXRXdOMll0TVRVd01UbG1OekJrT0dVMSJ9' > cloudflared.log 2>&1 &
+          sleep 10
+          echo "Tunnel started"
+          cat cloudflared.log
+
+      - name: Keep alive
+        run: |
+          # Max job time on GitHub Actions is 6 hours
+          sleep 21600
